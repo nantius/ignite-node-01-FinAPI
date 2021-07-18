@@ -79,6 +79,26 @@ app.get("/statement", verifyIfExistsAccountCPF, (req, res) => {
 });
 
 /**
+ * Returns the statement from an existing account based on date input
+ * 
+ * @param {string} CPF - identifies the user
+ * @param {date} date - date from which the user wants to see statements
+ * @returns {statement}
+ */
+app.get("/statement/date", verifyIfExistsAccountCPF, (req, res) => {
+    const { customer } = req;
+    const { date } = req.query;
+
+    const dateFormat = new Date(date + " 00:00");
+
+    const statement = customer.statement.filter(
+        (statement) => statement.created_at.toDateString() === new Date(dateFormat).toDateString()
+    );
+
+    return res.json(statement);
+});
+
+/**
  * Deposits an amount into a valid account
  * 
  * @param {string} description - explains the reason for the deposit
@@ -104,6 +124,7 @@ app.post("/deposit", verifyIfExistsAccountCPF, (req, res) => {
 /**
  * Withdraws an amount from a valid account that has a positive balance
  * 
+ * @param {string} CPF - identifies the user
  * @param {string} description - explains the reason for the deposit
  * @param {number} amount - quantity for the deposit
  * @returns {null}
@@ -128,6 +149,66 @@ app.post("/withdraw", verifyIfExistsAccountCPF, (req, res) => {
 
     return res.status(201).send();
 });
+
+/**
+ * Updates account info
+ * 
+ * @param {string} CPF - identifies the user
+ * @param {string} name - Account owner/name
+ * @returns {null}
+ */
+app.put("/account", verifyIfExistsAccountCPF, (req, res) => {
+    const { name } = req.body;
+    const { customer } = req;
+
+    customer.name = name;
+
+    return res.status(201).send();
+});
+
+/**
+ * Returns account info
+ * 
+ * @param {string} CPF - identifies the user
+ * @returns {null}
+ */
+app.get("/account", verifyIfExistsAccountCPF, (req, res) => {
+    const { customer } = req;
+
+    return res.json(customer);
+
+});
+
+
+/**
+ * Deletes an account as long as it exists
+ * 
+ * @param {string} CPF - identifies the user
+ * @returns {customer[]}
+ */
+app.delete("/account", verifyIfExistsAccountCPF, (req, res) => {
+    const { customer } = req;
+
+    const customerIndex = customers.findIndex(c => c.cpf === customer.cpf);
+    customers.splice(customerIndex, 1);
+
+    return res.status(200).json(customers);
+});
+
+/**
+ * Returns existing account's balance
+ * 
+ * @param {string} CPF - identifies the user
+ * @returns {statement}
+ */
+app.get("/balance", verifyIfExistsAccountCPF, (req, res) => {
+    const { customer } = req;
+
+    const balance = getBalance(customer.statement);
+
+    return res.json(balance);
+})
+
 
 
 
